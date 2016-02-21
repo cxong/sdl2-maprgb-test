@@ -39,8 +39,13 @@
 *.sln
 Win32/
 
+# Xcode
+Debug/
+*.xcodeproj/
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
+CMakeScripts/
 cmake_install.cmake
 *.dir/

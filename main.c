@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define CLAMP(v, _min, _max) MAX((_min), MIN((_max), (v)))
 #define GREY_MARGIN 20
-	double s = 1.0;
 	for (int y = 0; y < SCREEN_H; y++)
 	{
 		Uint8 v = (Uint8)CLAMP((SCREEN_H - y) * 255.0 / (SCREEN_H / 2), 0, 255);

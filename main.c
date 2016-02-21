@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 {
 	Uint32 *buf = NULL;
 	SDL_Texture *t = NULL;
+	SDL_PixelFormat *format = NULL;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
 
@@ -21,7 +22,7 @@ int main(int argc, char *argv[])
 		goto bail;
 	}
 
-	// Create surfaces
+	// Create surface
 	buf = malloc(SCREEN_W * SCREEN_H * sizeof(Uint32));
 	if (buf == NULL)
 	{
@@ -36,6 +37,12 @@ int main(int argc, char *argv[])
 	if (window == NULL)
 	{
 		printf("Failed to create window: %s\n", SDL_GetError());
+		goto bail;
+	}
+	format = SDL_AllocFormat(SDL_GetWindowPixelFormat(window));
+	if (format == NULL)
+	{
+		printf("Failed to alloc pixel format: %s\n", SDL_GetError());
 		goto bail;
 	}
 	renderer = SDL_CreateRenderer(window, -1, 0);
@@ -54,6 +61,75 @@ int main(int argc, char *argv[])
 	{
 		printf("Failed to create screen texture: %s\n", SDL_GetError());
 		goto bail;
+	}
+
+	// Draw a palette on the buffer
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define CLAMP(v, _min, _max) MAX((_min), MIN((_max), (v)))
+	Uint8 v = 255;
+	double s = 1.0;
+	for (int y = 0; y < SCREEN_H; y++)
+	{
+		for (int x = 0; x < SCREEN_W; x++)
+		{
+			SDL_Color c;
+			c.a = 255;
+			double h = x * 360.0 / SCREEN_W;
+			// set hue to h; use regular HSV to RGB conversion
+			double ff;
+			Uint8 p, q, t;
+			long i;
+			double hh = h;
+			if (hh >= 360.0)
+			{
+				hh = 0.0;
+			}
+			hh /= 60.0;
+			i = (long)hh;
+			ff = hh - i;
+			p = (Uint8)CLAMP(v * (1.0 - s), 0, 255);
+			q = (Uint8)CLAMP(v * (1.0 - (s * ff)), 0, 255);
+			t = (Uint8)CLAMP(v * (1.0 - (s * (1.0 - ff))), 0, 255);
+
+			switch (i)
+			{
+			case 0:
+				c.r = v;
+				c.g = t;
+				c.b = p;
+				break;
+			case 1:
+				c.r = q;
+				c.g = v;
+				c.b = p;
+				break;
+			case 2:
+				c.r = p;
+				c.g = v;
+				c.b = t;
+				break;
+
+			case 3:
+				c.r = p;
+				c.g = q;
+				c.b = v;
+				break;
+			case 4:
+				c.r = t;
+				c.g = p;
+				c.b = v;
+				break;
+			case 5:
+			default:
+				c.r = v;
+				c.g = p;
+				c.b = q;
+				break;
+			}
+			Uint32 pixel = SDL_MapRGBA(format, c.r, c.g, c.b, c.a);
+			buf[x + y*SCREEN_W] = pixel;
+		}
 	}
 
 	// Render to texture
@@ -94,6 +170,7 @@ bail:
 	SDL_DestroyTexture(t);
 	free(buf);
 	SDL_DestroyRenderer(renderer);
+	SDL_FreeFormat(format);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;

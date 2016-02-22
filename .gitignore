@@ -49,3 +49,7 @@ CMakeFiles/
 CMakeScripts/
 cmake_install.cmake
 *.dir/
+
+# Linux
+Makefile
+sdl2_maprgb_test
